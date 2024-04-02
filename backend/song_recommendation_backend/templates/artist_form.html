@@ -1,0 +1,16 @@
+{% comment %} <!-- recommendations/templates/artist_form.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Artist Form</title>
+</head>
+<body>
+    <h2>Submit an Artist</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html> {% endcomment %}

@@ -1,0 +1,17 @@
+{% comment %} <!-- recommendations/templates/artist_recommendations.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Artist Recommendations</title>
+</head>
+<body>
+    <h2>Recommendations for {{ artist_name }}</h2>
+    <ul>
+    {% for recommendation in recommendations %}
+        <li>{{ recommendation }}</li>  <!-- Adjust this to display the recommendation details -->
+    {% endfor %}
+    </ul>
+</body>
+</html> {% endcomment %}
+
