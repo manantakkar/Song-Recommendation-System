@@ -96,26 +96,14 @@ def recommend_playlist(request):
         df = RecommendPlaylist().extract(URL)
         
         # Retrieve recommendations
-        
         edm_top40 = RecommendPlaylist().recommend_from_playlist(songDF, complete_feature_set, df)
-        print(f"---------------------------{edm_top40}")
-        # Get number of recommendations from request data
-        # number_of_recs = int(request.data.get('number_of_recs', 10))  # Default to 10 recommendations if not provided
-        # my_songs = []
-        # # Prepare response data
-        # for i in range(number_of_recs):
-        #     my_songs.append({
-        #         'title': str(edm_top40.iloc[i, 1]) + ' - ' + '"' + str(edm_top40.iloc[i, 4]) + '"',
-        #         'link': "https://open.spotify.com/track/" + str(edm_top40.iloc[i, -6]).split("/")[-1]
-        #     })
-
+    
         number_of_recs = int(request.data.get('number_of_recs', 5))  # Default to 5 recommendations if not provided
         my_songs = []
         for i in range(number_of_recs):
             my_songs.append({'title': str(edm_top40.iloc[i,1]) + ' - '+ '"'+str(edm_top40.iloc[i,4])+'"', 'link': "https://open.spotify.com/track/"+ str(edm_top40.iloc[i,-6]).split("/")[-1]})
         
         # Return recommendations as JSON response    
-     
         return Response({'songs': my_songs})
     
 
@@ -126,16 +114,13 @@ def recommend_song(request):
     if request.method == 'POST':
         song_list = request.POST.get('songs')
         song_list = json.loads(song_list)
-        n_songs = request.POST.get('n_songs',10) #Default to 10 recommendations if not provided
+        n_songs = request.POST.get('n_songs', 10) #Default to 10 recommendations if not provided
 
         spotify_data = pd.read_csv("datasets/data.csv")
-        recommendation = RecommendSong().recommend_songs(song_list, spotify_data, n_songs)
+        recommendation = RecommendSong().recommend_songs(song_list, n_songs)
 
         return Response({'songs': recommendation})
-
-
-
-
+    
 
 
 

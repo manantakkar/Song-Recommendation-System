@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a parent image
-FROM node:14-alpine
+FROM node:20-alpine
 
 # Set the working directory in the container
 WORKDIR /app
@@ -8,10 +8,10 @@ WORKDIR /app
 COPY . /app
 
 # Install dependencies
-RUN npm install
+RUN yarn
 
 # Make port 3000 available to the world outside this container
 EXPOSE 3000
 
 # Define the command to run your JavaScript frontend
-CMD ["npm", "start"]
+CMD ["yarn", "dev"]
