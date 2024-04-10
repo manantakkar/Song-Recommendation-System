@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -6,12 +6,12 @@ from .models import RecommendationScheme, Music
 from .forms import RecommendationForm
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .utils import RecommendPlaylist, RecommendSong, RecommendArtist
+from .utils import RecommendPlaylist, RecommendArtist, RecommendSongYear
 import pandas as pd
 from django.conf import settings
 from decouple import config
 import requests
-
+import re
 
 
     
@@ -82,10 +82,10 @@ def recommend_artist(request):
 
 
 
+@csrf_exempt
 @api_view(['POST'])
 def recommend_playlist(request):
     if request.method == 'POST':
-
         songDF = pd.read_csv(settings.CSV_FILE_PATH)
         complete_feature_set = pd.read_csv(settings.COMPLETE_PATH)
         
@@ -103,27 +103,59 @@ def recommend_playlist(request):
         for i in range(number_of_recs):
             my_songs.append({'title': str(edm_top40.iloc[i,1]) + ' - '+ '"'+str(edm_top40.iloc[i,4])+'"', 'link': "https://open.spotify.com/track/"+ str(edm_top40.iloc[i,-6]).split("/")[-1]})
         
+        
         # Return recommendations as JSON response    
-        return Response({'songs': my_songs})
+        return JsonResponse(my_songs)
+
     
 
-
+@csrf_exempt
 @api_view(['POST'])
 def recommend_song(request):
     
     if request.method == 'POST':
-        song_list = request.POST.get('songs')
-        song_list = json.loads(song_list)
+        song_name = request.POST.get('songs')
+        year = request.POST.get('year', '')
         n_songs = request.POST.get('n_songs', 10) #Default to 10 recommendations if not provided
-
-        spotify_data = pd.read_csv("datasets/data.csv")
-        recommendation = RecommendSong().recommend_songs(song_list, n_songs)
+         
+        if year == '':
+            year = RecommendSongYear().get_spotify_year(song_name)
+            if year:
+                print(f"The song '{song_name}' was released in {year}.")
+            else:
+                print(f"Couldn't find information for the song '{song_name}'.")
+                return HttpResponseServerError
+    
+        song_list = []
+        song_list.append({'name': song_name, 'year': int(year)})
+        recommendation = RecommendSongYear().recommend_songs(song_list, n_songs)
 
         return Response({'songs': recommendation})
     
 
+@csrf_exempt
+@api_view(['POST'])
+def search_from_dataset(request):
+    df = pd.read_csv(settings.SONGS_PATH)
+    df['name'] = df['name'].str.lower()
 
+    df.set_index('name', inplace=True)  
+    # sorted_df = df.sort_values(by='popularity', ascending=False)
 
+    song_name = request.POST.get('songs').lower()
+    regex_pattern = f".*{re.escape(song_name)}.*"
+    
+    result = df[df.index.str.contains(regex_pattern, case=False, regex=True)]
+
+    # result = df.loc[(df.index == song_name)]
+    result = result.reset_index().to_dict(orient="records")
+
+    result = [r['name'].title() for r in result if r['name'].startswith(song_name) ]
+
+    # for r in result:
+    #     r['name'] = r['name'].title()    
+
+    return Response({'songs': set(result)})
 
 
 # import os

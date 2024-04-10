@@ -46,8 +46,6 @@ class RecommendArtist:
 
 
 
-
-
 class RecommendPlaylist:
     """
     A class for recommending songs based on a specific playlist.
@@ -151,9 +149,7 @@ class RecommendPlaylist:
 
 
 
-
-
-class RecommendSong:
+class RecommendSongYear:
     """
     A class for recommending songs based on input song list.
     """
@@ -291,4 +287,27 @@ class RecommendSong:
         rec_songs = rec_songs[~rec_songs['name'].isin(song_dict['name'])]
         return rec_songs[metadata_cols].to_dict(orient='records')
         
+
+
+
+    def get_spotify_year(self, song_name):
+        # Authenticate with Spotify API
+        client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+
+        # Search for the song
+        results = sp.search(q='track:' + song_name, type='track', limit=1)
+
+        # Extract the release year from the first search result
+        if results['tracks']['items']:
+            track = results['tracks']['items'][0]
+            release_year = track['album']['release_date'][:4]  # Extract the year part
+            return release_year
+        else:
+            return None
+
+   
+
+
+# class RecommendSong:
 

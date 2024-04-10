@@ -22,6 +22,7 @@ DATASETS_DIR = os.path.join(BASE_DIR, 'datasets')
 # Define the path to the CSV file
 CSV_FILE_PATH = os.path.join(DATASETS_DIR, 'allsong_data.csv')
 COMPLETE_PATH = os.path.join(DATASETS_DIR, 'complete_feature.csv')
+SONGS_PATH = os.path.join(DATASETS_DIR, 'data.csv')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -32,7 +33,9 @@ SECRET_KEY = 'django-insecure-#a=(g)hy2zl)y6@)0685*fbh+b6@%-)c1*+qqs(i3yzoimoi+x
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+CORS_ALLOW_ALL_ORIGINS = True  # Allow requests from all origins
+
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -44,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'recommendations',
     'authentication'
 ]
@@ -53,6 +57,8 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
