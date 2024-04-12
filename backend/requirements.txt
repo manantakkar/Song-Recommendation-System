@@ -31,3 +31,4 @@ Werkzeug==2.0.2
 seaborn
 plotly
 django-cors-headers
+loguru

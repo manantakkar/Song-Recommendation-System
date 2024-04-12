@@ -68,7 +68,7 @@ class RecommendPlaylist:
         complete_feature_set_playlist_final = complete_feature_set_playlist.drop(columns="id")
         return complete_feature_set_playlist_final.sum(axis=0), complete_feature_set_nonplaylist
 
-    def generate_playlist_recos(df, features, nonplaylist_features):
+    def playlist_recommendations(df, features, nonplaylist_features):
         """
         Generate recommendations based on songs in a specific playlist.
 
@@ -80,13 +80,13 @@ class RecommendPlaylist:
         Returns:
             DataFrame: Top 40 recommendations for that playlist.
         """
-        non_playlist_df = df[df['id'].isin(nonplaylist_features['id'].values)]
-        non_playlist_df['sim'] = cosine_similarity(nonplaylist_features.drop('id', axis=1).values, features.values.reshape(1, -1))[:, 0]
-        non_playlist_df_top_40 = non_playlist_df.sort_values('sim', ascending=False).head(40)
-        return non_playlist_df_top_40
+        np_df = df[df['id'].isin(nonplaylist_features['id'].values)]
+        np_df['sim'] = cosine_similarity(nonplaylist_features.drop('id', axis=1).values, features.values.reshape(1, -1))[:, 0]
+        np_df_top = np_df.sort_values('sim', ascending=False).head(40) 
+        return np_df_top
 
    
-    def recommend_from_playlist(self, songDF, complete_feature_set, playlistDF_test):
+    def recommend_using_playlist(self, song_df, complete_feature_set, playlistDF_test):
         """
         Recommend songs from a playlist.
 
@@ -99,7 +99,7 @@ class RecommendPlaylist:
             DataFrame: Top 40 recommendations for the playlist.
         """
         complete_feature_set_playlist_vector, complete_feature_set_nonplaylist = RecommendPlaylist.generate_playlist_feature(complete_feature_set, playlistDF_test)
-        return RecommendPlaylist.generate_playlist_recos(songDF, complete_feature_set_playlist_vector, complete_feature_set_nonplaylist)
+        return RecommendPlaylist.playlist_recommendations(song_df, complete_feature_set_playlist_vector, complete_feature_set_nonplaylist)
 
 
 
@@ -108,7 +108,7 @@ class RecommendPlaylist:
         
 
         #use the clint secret and id details
-        client_credentials_manager = SpotifyClientCredentials(client_id=config('client_id'),client_secret=config('client_secret'))
+        client_credentials_manager = SpotifyClientCredentials(client_id=client_id,client_secret=client_secret)
         sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
         # the URI is split by ':' to get the username and playlist ID
@@ -160,12 +160,12 @@ class RecommendSongYear:
         self.number_cols = ['valence', 'year', 'acousticness', 'danceability', 'duration_ms', 'energy', 
                             'explicit', 'instrumentalness', 'key', 'liveness', 'loudness', 'mode', 
                             'popularity', 'speechiness', 'tempo']
-        self.spotify_data = pd.read_csv("datasets/data.csv")
+        self.spotify_data = pd.read_csv("datasets/spotify_data.csv")
         self.song_cluster_pipeline.fit(self.spotify_data[self.number_cols])
         self.spotify_data['cluster_label'] = self.song_cluster_pipeline.predict(self.spotify_data[self.number_cols])
 
     
-    def find_song(self, name, year):
+    def find_song(self, name, artist, year):
         """
         Find a song using the Spotify API.
 
@@ -179,7 +179,7 @@ class RecommendSongYear:
     
         sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
         song_data = defaultdict()
-        results = sp.search(q= 'track: {} year: {}'.format(name,year), limit=1)
+        results = sp.search(q= 'track: {} artists: {} year: {}'.format(name,artist,year), limit=1)
         if results['tracks']['items'] == []:
             return None
 
@@ -200,24 +200,24 @@ class RecommendSongYear:
 
     
     
-    def get_song_data(self, song):
-        """
-        Get song data from Spotify dataset or API.
+    # def get_song_data(self, song):
+    #     """
+    #     Get song data from Spotify dataset or API.
 
-        Parameters:
-            song (dict): Dictionary containing song information.
+    #     Parameters:
+    #         song (dict): Dictionary containing song information.
 
-        Returns:
-            DataFrame: A DataFrame containing information about the song.
-        """
+    #     Returns:
+    #         DataFrame: A DataFrame containing information about the song.
+    #     """
         
-        try:
-            song_data = self.spotify_data[(self.spotify_data['name'] == song["name"]) 
-                                    & (self.spotify_data['year'] == song['year'])].iloc[0]
-            return song_data
+    #     try:
+    #         song_data = self.spotify_data[(self.spotify_data['name'] == song["name"]) 
+    #                                 & (self.spotify_data['year'] == song['year'])].iloc[0]
+    #         return song_data
         
-        except IndexError:
-            return self.find_song(song['name'], song['year'])
+    #     except IndexError:
+    #         return self.find_song(song['name'], song['artist'], song['year'])
     
 
     
@@ -235,10 +235,10 @@ class RecommendSongYear:
         song_vectors = []
     
         for song in song_list:
-            song_data = self.get_song_data(song)
+            song_data = self.find_song(song['name'], song['artist'], song['year'])
             if song_data is None:
-                print('Warning: {} does not exist in Spotify or in database'.format(song['name']))
-                continue
+                print('Warning: {} does not exist'.format(song['name']))
+                return None
             song_vector = song_data[self.number_cols].values
             song_vectors.append(song_vector)  
         
@@ -261,7 +261,7 @@ class RecommendSongYear:
     
     
     
-    def recommend_songs(self, song_list, n_songs):
+    def recommend_songs(self, songs, artist, year, n_songs):
         """
         Recommend songs based on input song list.
 
@@ -274,9 +274,26 @@ class RecommendSongYear:
         """
         
         metadata_cols = ['name', 'year', 'artists']
+        print(f"songlisttttt:::: {songs}, {artist}, {year}") #to be removed
+        song_list = []
+        for song in songs:
+            if year and artist:
+                song_list.append({'name': song.title(), 'artist': artist, 'year': int(year)})
+                continue
+            
+            year, artist = self.get_spotify_info(song.title(), year = year, artist = artist)
+            print(f"YEHHH::::: {year}, {artist}")
+            if not artist or not year:
+                return None
+
+            song_list.append({'name': song.title(), 'artist': artist, 'year': int(year)})
+            year = ''
+            artist = ''
+        print(f"songlisttttt:::: {song_list}") #to be removed
         song_dict = self.flatten_dict_list(song_list)
         
         song_center = self.get_mean_vector(song_list)
+        
         scaler = self.song_cluster_pipeline.steps[0][1]
         scaled_data = scaler.transform(self.spotify_data[self.number_cols])
         scaled_song_center = scaler.transform(song_center.reshape(1, -1))
@@ -285,26 +302,83 @@ class RecommendSongYear:
         
         rec_songs = self.spotify_data.iloc[index]
         rec_songs = rec_songs[~rec_songs['name'].isin(song_dict['name'])]
-        return rec_songs[metadata_cols].to_dict(orient='records')
+        rec_songs = rec_songs[metadata_cols].to_dict(orient='records')
+        spotify_info = []
+        for song in rec_songs:
+            name = song["name"]
+            year = song["year"]
+            artists = eval(song["artists"])  # Convert string representation of list to actual list
+          
+            image_link, spotify_link, _ , _ = self.get_recommended_song_info(name, artists, year)
+            
+            spotify_info.append({
+                "name": name.title(),
+                "year": year,
+                "artist": artists,
+                "spotify_link": spotify_link,
+                "image_link": image_link
+            })
+        return spotify_info
         
 
 
 
-    def get_spotify_year(self, song_name):
+    def get_recommended_song_info(self, song_name, artists, release_year):
+        # Authenticate with Spotify API
+        client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+        
+        # Search for the song
+        if release_year == '':
+            query = f'track:{song_name} artist:{artists[0]}'
+
+        else:
+            query = f'track:{song_name} artist:{artists[0]} year:{release_year}'
+           
+        results = sp.search(q=query, type='track', limit=1)
+
+        # Extract the release year, artist name, image link, and Spotify link from the first search result
+        if results['tracks']['items']:
+            track = results['tracks']['items'][0]
+            year = track['album']['release_date'][:4]  # Extract the year part
+            artist_name = track['artists'][0]['name']  # Extract the artist name
+            image_link = track['album']['images'][0]['url'] if track['album']['images'] else None  # Extract the image link
+            spotify_link = track['external_urls']['spotify']  # Extract the Spotify link
+            return image_link, spotify_link, artist_name, year
+        else:
+            return None, None, None, None
+
+    
+    
+    
+    def get_spotify_info(self, song_name, year='', artist=''):
         # Authenticate with Spotify API
         client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
         sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
         # Search for the song
-        results = sp.search(q='track:' + song_name, type='track', limit=1)
+        
+        if artist and year:
+            query = f'track:{song_name} artist:{artist} year:{year}'
+        elif artist:
+            query = f'track:{song_name} artist:{artist}'
+        elif year:
+            query = f'track:{song_name} year:{year}'
+        else:
+            query = f'track:{song_name}'
 
-        # Extract the release year from the first search result
+        
+        results = sp.search(q=query, type='track', limit=1)
+
+        # Extract the release year, artist name, image link, and Spotify link from the first search result
         if results['tracks']['items']:
             track = results['tracks']['items'][0]
             release_year = track['album']['release_date'][:4]  # Extract the year part
-            return release_year
+            artist_name = track['artists'][0]['name']  # Extract the artist name
+            return release_year, artist_name
         else:
-            return None
+            return None, None
+
 
    
 

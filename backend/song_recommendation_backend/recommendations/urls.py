@@ -2,10 +2,11 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('recommend_artist/', recommend_artist, name='recommend_artist'),
-    path('recommend_playlist/', recommend_playlist, name='recommend_playlist'),
-    path('recommend_song/', recommend_song, name='recommend_song'),
-    path('search/', search_from_dataset, name='search_from_dataset'),
+    path('recommend-artist/', recommend_artist, name='recommend-artist'),
+    path('recommend-playlist/', recommend_playlist, name='recommend-playlist'),
+    path('recommend-song/', recommend_song, name='recommend-song'),
+
+    path('search/', search_from_dataset, name='search'),
     path('', trending_songs, name='trending_songs'),
     
 ]

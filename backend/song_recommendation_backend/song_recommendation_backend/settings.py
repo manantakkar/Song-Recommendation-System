@@ -20,9 +20,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DATASETS_DIR = os.path.join(BASE_DIR, 'datasets')
 
 # Define the path to the CSV file
-CSV_FILE_PATH = os.path.join(DATASETS_DIR, 'allsong_data.csv')
-COMPLETE_PATH = os.path.join(DATASETS_DIR, 'complete_feature.csv')
-SONGS_PATH = os.path.join(DATASETS_DIR, 'data.csv')
+CSV_FILE_PATH = os.path.join(DATASETS_DIR, 'all_songs.csv')
+COMPLETE_PATH = os.path.join(DATASETS_DIR, 'songs_feature.csv')
+SONGS_PATH = os.path.join(DATASETS_DIR, 'spotify_data.csv')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/

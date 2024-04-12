@@ -2,6 +2,7 @@
 
 df.pkl
 similarity.pkl
+.cache
 # Logs
 logs
 *.log
@@ -26,3 +27,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+logs

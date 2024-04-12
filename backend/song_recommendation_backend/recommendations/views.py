@@ -1,6 +1,7 @@
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render
 import json
+from .logger import audit_logger, exception_logger
 from django.views.decorators.csrf import csrf_exempt
 from .models import RecommendationScheme, Music
 from .forms import RecommendationForm
@@ -12,6 +13,7 @@ from django.conf import settings
 from decouple import config
 import requests
 import re
+
 
 
     
@@ -86,26 +88,30 @@ def recommend_artist(request):
 @api_view(['POST'])
 def recommend_playlist(request):
     if request.method == 'POST':
-        songDF = pd.read_csv(settings.CSV_FILE_PATH)
+        song_df = pd.read_csv(settings.CSV_FILE_PATH)
         complete_feature_set = pd.read_csv(settings.COMPLETE_PATH)
         
         # Get URL from request data
-        URL = request.data.get('URL')
+        URL = request.data.get('URL', '')
+
+        if URL is None or URL == '':
+            return JsonResponse({'error': 'Please enter the spotify playlist URL'}, status=400)
         
         # Use extract function to get features dataframe
         df = RecommendPlaylist().extract(URL)
         
         # Retrieve recommendations
-        edm_top40 = RecommendPlaylist().recommend_from_playlist(songDF, complete_feature_set, df)
+        recommends = RecommendPlaylist().recommend_using_playlist(song_df, complete_feature_set, df)
+
     
-        number_of_recs = int(request.data.get('number_of_recs', 5))  # Default to 5 recommendations if not provided
+        number_of_recs = int(request.data.get('number_of_recs', 10))  # Default to 10 recommendations if not provided
         my_songs = []
         for i in range(number_of_recs):
-            my_songs.append({'title': str(edm_top40.iloc[i,1]) + ' - '+ '"'+str(edm_top40.iloc[i,4])+'"', 'link': "https://open.spotify.com/track/"+ str(edm_top40.iloc[i,-6]).split("/")[-1]})
         
+            my_songs.append({'name': str(recommends.iloc[i,4]), 'artist': str(recommends.iloc[i,1]), 'link': "https://open.spotify.com/track/"+ str(recommends.iloc[i,-6]).split("/")[-1]})
         
         # Return recommendations as JSON response    
-        return JsonResponse(my_songs)
+        return Response(my_songs)
 
     
 
@@ -114,23 +120,32 @@ def recommend_playlist(request):
 def recommend_song(request):
     
     if request.method == 'POST':
-        song_name = request.POST.get('songs')
-        year = request.POST.get('year', '')
-        n_songs = request.POST.get('n_songs', 10) #Default to 10 recommendations if not provided
-         
-        if year == '':
-            year = RecommendSongYear().get_spotify_year(song_name)
-            if year:
-                print(f"The song '{song_name}' was released in {year}.")
-            else:
-                print(f"Couldn't find information for the song '{song_name}'.")
-                return HttpResponseServerError
-    
-        song_list = []
-        song_list.append({'name': song_name, 'year': int(year)})
-        recommendation = RecommendSongYear().recommend_songs(song_list, n_songs)
+        # songs = request.POST.get('songs')
+        
+        json_data = json.loads(request.body.decode('utf-8'))
 
-        return Response({'songs': recommendation})
+        # Extract the 'songs' field from the JSON data
+        songs = json_data.get('songs')
+        artist = json_data.get('artist', '')
+        year = json_data.get('year', '')
+        n_songs = json_data.get('n_songs', 10)#Default to 10 recommendations if not provided
+        if n_songs == 0:
+            n_songs = 10
+        
+        audit_logger.info(f"Input: {songs}, {artist}, {year}, {n_songs}")
+         
+        if songs == None:
+            return JsonResponse({'error': 'Please enter the song details'}, status=400)
+
+        recommendation = RecommendSongYear().recommend_songs(songs, artist, year, n_songs)
+    
+        if len(recommendation) > 0:
+            return Response({'songs': recommendation})
+        elif recommendation == None:
+            return JsonResponse({'error': 'Enter artist name and release year'}, status=500)
+        else:
+            return HttpResponseServerError
+
     
 
 @csrf_exempt
