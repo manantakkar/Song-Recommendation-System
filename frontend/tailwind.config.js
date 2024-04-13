@@ -9,9 +9,12 @@ export default {
         blue_charcoal: "#252C32",
         primary: "#0039A6",
         raven: "#687182",
+        pristine_oceanic:"#00d8bf",
+
       },
       fontFamily: {
         Inter: "'Inter Variable', sans-serif",
+        Oxanium: '"Oxanium", sans-serif'
       },
     },
   },

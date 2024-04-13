@@ -13,6 +13,9 @@ from django.conf import settings
 from decouple import config
 import requests
 import re
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+
 
 
 
@@ -90,9 +93,9 @@ def recommend_playlist(request):
     if request.method == 'POST':
         song_df = pd.read_csv(settings.CSV_FILE_PATH)
         complete_feature_set = pd.read_csv(settings.COMPLETE_PATH)
-        
+        json_data = json.loads(request.body.decode('utf-8'))
         # Get URL from request data
-        URL = request.data.get('URL', '')
+        URL = json_data.get('URL', '')
 
         if URL is None or URL == '':
             return JsonResponse({'error': 'Please enter the spotify playlist URL'}, status=400)
@@ -104,11 +107,11 @@ def recommend_playlist(request):
         recommends = RecommendPlaylist().recommend_using_playlist(song_df, complete_feature_set, df)
 
     
-        number_of_recs = int(request.data.get('number_of_recs', 10))  # Default to 10 recommendations if not provided
+        number_of_recs = int(json_data.get('number_of_recs', 10))  # Default to 10 recommendations if not provided
         my_songs = []
         for i in range(number_of_recs):
         
-            my_songs.append({'name': str(recommends.iloc[i,4]), 'artist': str(recommends.iloc[i,1]), 'link': "https://open.spotify.com/track/"+ str(recommends.iloc[i,-6]).split("/")[-1]})
+            my_songs.append({'name': str(recommends.iloc[i,4]), 'artist': str(recommends.iloc[i,1]), 'spotify_link': "https://open.spotify.com/track/"+ str(recommends.iloc[i,-6]).split("/")[-1]})
         
         # Return recommendations as JSON response    
         return Response(my_songs)
@@ -172,6 +175,31 @@ def search_from_dataset(request):
 
     return Response({'songs': set(result)})
 
+
+
+
+
+@csrf_exempt
+@api_view(['GET'])
+def search_from_spotify(request):
+    song_name = request.query_params.get("search")
+    client_id = config('client_id')
+    client_secret = config('client_secret')
+
+    sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
+
+    result = sp.search(q=song_name, type='track', limit=10)
+
+    response_data = []
+    for track in result['tracks']['items']:
+        response_data.append({
+            'name': track['name'],
+            'artist': ', '.join([artist['name'] for artist in track['artists']]),
+            'year': track['album']['release_date'][:4],
+            'image_link': track['album']['images'][0]['url']
+        })
+
+    return Response({'songs': response_data})
 
 # import os
 # import pickle
