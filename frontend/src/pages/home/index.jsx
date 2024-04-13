@@ -9,6 +9,7 @@ export const recommendationsContext = createContext({
   setN_songs: () => {},
   songs: [],
   setSongs: () => {},
+  setRecommendations: () => {},
 });
 
 import Navbar from "../../components/navbar";
@@ -59,7 +60,6 @@ export default function Home() {
     }
   };
 
-
   return (
     <recommendationsContext.Provider
       value={{
@@ -68,6 +68,7 @@ export default function Home() {
         setN_songs,
         setSongs,
         songs,
+        setRecommendations,
       }}
     >
       <div className="overflow-hidden h-screen">

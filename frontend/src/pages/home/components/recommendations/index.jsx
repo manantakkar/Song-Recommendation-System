@@ -21,7 +21,7 @@ export default function Recommendations({ songs }) {
       <h2 className="text-white text-3xl text-center font-bold py-4">
         Recommended Songs
       </h2>
-      <div className="w-full px-5 pt-5 grid gap-4 overflow-auto">
+      <div className="w-full px-5 pt-5 grid gap-4 overflow-auto max-h-[70vh]">
         {songs.map((song, idx) => {
           return (
             <a

@@ -9,7 +9,7 @@ export default function RecommendationByUrl() {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const { setSongs } = useContext(recommendationsContext);
+  const { setRecommendations } = useContext(recommendationsContext);
 
   const handelSubmit = async (e) => {
     try {
@@ -17,9 +17,9 @@ export default function RecommendationByUrl() {
       setIsLoading(true);
       const res = await axiosInstance.post("recommend-playlist/", {
         URL: url,
-        n_songs: Number(n_songs) || 5   ,
+        n_songs: Number(n_songs) || 5,
       });
-      setSongs(res.data);
+      setRecommendations(res.data);
     } catch (error) {
       console.log(error);
     } finally {
@@ -30,7 +30,7 @@ export default function RecommendationByUrl() {
   return (
     <form
       onSubmit={handelSubmit}
-      className="flex flex-col justify-center min-w-[520px] gap-5 py-10 px-5 shadow-[rgba(14,30,37,0.12)_0px_2px_4px_0px,_rgba(14,30,37,0.32)_0px_2px_16px_0px]"
+      className="flex flex-col pt-16 h-fit min-w-[520px] gap-5 py-10 px-5 shadow-[rgba(14,30,37,0.12)_0px_2px_4px_0px,_rgba(14,30,37,0.32)_0px_2px_16px_0px]"
     >
       <div className="grid gap-4">
         <Input

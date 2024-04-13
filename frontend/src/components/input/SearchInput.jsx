@@ -29,7 +29,7 @@ export default function SearchInput({ onSelect, value, id }) {
       }
     },
     (err) => {
-      console.log(err.message);
+      search("");
     }
   );
   useEffect(() => {
