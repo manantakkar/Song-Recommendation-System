@@ -70,7 +70,8 @@ def recommend_playlist(request):
         json_data = json.loads(request.body.decode('utf-8'))
         # Get URL from request data
         URL = json_data.get('URL', '')
-
+        n_songs = int(json_data.get('n_songs', 10))  # Default to 10 recommendations if not provided
+        
         if URL is None or URL == '':
             return JsonResponse({'error': 'Please enter the spotify playlist URL'}, status=400)
         
@@ -80,11 +81,9 @@ def recommend_playlist(request):
         # Retrieve recommendations
         recommends = RecommendPlaylist().recommend_using_playlist(song_df, complete_feature_set, df)
 
-    
-        number_of_recs = int(json_data.get('number_of_recs', 10))  # Default to 10 recommendations if not provided
+
         my_songs = []
-        for i in range(number_of_recs):
-        
+        for i in range(n_songs):
             my_songs.append({'name': str(recommends.iloc[i,4]), 'artist': str(recommends.iloc[i,1]), 'spotify_link': "https://open.spotify.com/track/"+ str(recommends.iloc[i,-6]).split("/")[-1]})
         
         # Return recommendations as JSON response    
@@ -99,21 +98,14 @@ def recommend_song(request):
     if request.method == 'POST':
         # songs = request.POST.get('songs')
         
-        json_data = json.loads(request.body.decode('utf-8'))
+        json_data = json.loads(request.body)
 
         # Extract the 'songs' field from the JSON data
         songs = json_data.get('songs')
         artist = json_data.get('artist', '')
         year = json_data.get('year', '')
-        n_songs = json_data.get('n_songs', 10)#Default to 10 recommendations if not provided
-        if n_songs == 0:
-            n_songs = 10
-        
-        audit_logger.info(f"Input: {songs}, {artist}, {year}, {n_songs}")
-         
-        if songs == None:
-            return JsonResponse({'error': 'Please enter the song details'}, status=400)
-
+        n_songs = json_data.get('n_songs', 10) #Default to 10 recommendations if not provided
+          
         recommendation = RecommendSongYear().recommend_songs(songs, artist, year, n_songs)
     
         if len(recommendation) > 0:
