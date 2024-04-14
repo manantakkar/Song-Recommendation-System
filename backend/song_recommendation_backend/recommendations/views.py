@@ -147,4 +147,4 @@ def search_from_spotify(request):
             'image_link': track['album']['images'][0]['url']
         })
 
-    return Response({'songs': response_data
+    return Response({'songs': response_data})
