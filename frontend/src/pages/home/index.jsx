@@ -44,7 +44,7 @@ export default function Home() {
           songs: [song.name],
           artist: song.artist,
           year: song.year,
-          n_songs: Number(n_songs) || 5,
+          n_songs: Number(n_songs) || 10,
         };
       } else if (songs.length > 1) {
         data = {

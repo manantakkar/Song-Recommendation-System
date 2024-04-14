@@ -17,7 +17,7 @@ export default function RecommendationByUrl() {
       setIsLoading(true);
       const res = await axiosInstance.post("recommend-playlist/", {
         URL: url,
-        n_songs: Number(n_songs) || 5,
+        n_songs: Number(n_songs) || 10,
       });
       setRecommendations(res.data);
     } catch (error) {
