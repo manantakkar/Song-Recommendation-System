@@ -10,38 +10,14 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from collections import defaultdict
 from decouple import config
-from recommender.api import Recommender
 import json
+from .logger import *
 
 
 
 
 client_id = config('client_id')
 client_secret = config('client_secret')
-
-
-class RecommendArtist:
-   
-
-    def generate(self, artist_name, genres):
-        recommender = Recommender(client_id=config('client_id'), client_secret=config('client_secret'))
-        recommender.artists = artist_name
-        recommender.genres = genres
-    
-        recommendations = recommender.find_recommendations()
-        result = []
-       
-        for recommendation in recommendations['tracks']:
-            
-            name=recommendation['name']
-            link=recommendation['external_urls']['spotify']
-            artist=recommendation['artists'][0]['name']
-            image_link=recommendation['album']['images'][0]['url']
-            x = {'name': name, 'link': link, 'artist': artist, 'image_link': image_link}
-            result.append(x)
-
-        return result
-
 
 
 
@@ -150,11 +126,31 @@ class RecommendPlaylist:
 
 
 class RecommendSongYear:
+   
     """
     A class for recommending songs based on input song list.
+    
+    Attributes:
+        song_cluster_pipeline (sklearn.pipeline.Pipeline): Pipeline for clustering songs based on audio features.
+        number_cols (list): List of numerical column names used for clustering.
+        spotify_data (pandas.DataFrame): DataFrame containing Spotify song data.
+    
+    Methods:
+        __init__: Initializes the RecommendSongYear class and fits the clustering pipeline to the Spotify data.
+        find_song: Finds a song using the Spotify API based on name, artist, and year.
+        get_mean_vector: Calculates the mean vector for a list of songs.
+        flatten_dict_list: Flattens a list of dictionaries into a single dictionary.
+        recommend_songs: Recommends songs based on an input song list, artist, year, and number of songs.
+        get_recommended_song_info: Retrieves additional information for a recommended song from the Spotify API.
+        get_spotify_info: Retrieves Spotify information (year and artist) for a given song name.
     """
 
     def __init__(self):
+
+        """
+        Initializes the RecommendSongYear class and fits the clustering pipeline to the Spotify data.
+        """
+         
         self.song_cluster_pipeline = Pipeline([('scaler', StandardScaler()), 
                                                ('kmeans', KMeans(n_clusters=20))])
         self.number_cols = ['valence', 'year', 'acousticness', 'danceability', 'duration_ms', 'energy', 
@@ -166,11 +162,13 @@ class RecommendSongYear:
 
     
     def find_song(self, name, artist, year):
+        
         """
         Find a song using the Spotify API.
 
         Parameters:
             name (str): The name of the song.
+            artist (str): The artist of the song.
             year (int): The year of the song.
 
         Returns:
@@ -223,6 +221,7 @@ class RecommendSongYear:
     
     
     def get_mean_vector(self, song_list):
+       
         """
         Get the mean vector for a list of songs.
 
@@ -237,7 +236,7 @@ class RecommendSongYear:
         for song in song_list:
             song_data = self.find_song(song['name'], song['artist'], song['year'])
             if song_data is None:
-                print('Warning: {} does not exist'.format(song['name']))
+                audit_logger.error('Error: {} does not exist'.format(song['name']))
                 return None
             song_vector = song_data[self.number_cols].values
             song_vectors.append(song_vector)  
@@ -249,6 +248,16 @@ class RecommendSongYear:
 
 
     def flatten_dict_list(self, dict_list):
+
+        """
+        Flatten a list of dictionaries into a single dictionary.
+
+        Parameters:
+            dict_list (list): List of dictionaries.
+
+        Returns:
+            defaultdict: Flattened dictionary.
+        """
 
         flattened_dict = defaultdict()
         for key in dict_list[0].keys():
@@ -262,19 +271,22 @@ class RecommendSongYear:
     
     
     def recommend_songs(self, songs, artist, year, n_songs):
+        
         """
         Recommend songs based on input song list.
 
         Parameters:
-            song_list (list): List of song dictionaries.
+            songs (list): List of song names.
+            artist (str): The artist of the songs.
+            year (int): The release year of the songs.
             n_songs (int): Number of songs to recommend.
 
         Returns:
-            DataFrame: DataFrame containing recommended songs.
+            list: List of recommended songs with additional information.
         """
         
         metadata_cols = ['name', 'year', 'artists']
-        print(f"songlisttttt:::: {songs}, {artist}, {year}") #to be removed
+        audit_logger.debug(f"User Input----> song: {songs}, artist: {artist}, year: {year}, n_songs: {n_songs}")
         song_list = []
         for song in songs:
             if year and artist:
@@ -282,14 +294,14 @@ class RecommendSongYear:
                 continue
             
             year, artist = self.get_spotify_info(song.title(), year = year, artist = artist)
-            print(f"YEHHH::::: {year}, {artist}")
+
             if not artist or not year:
                 return None
 
             song_list.append({'name': song.title(), 'artist': artist, 'year': int(year)})
             year = ''
             artist = ''
-        print(f"songlisttttt:::: {song_list}") #to be removed
+        audit_logger.debug(f"Song List: {song_list}")
         song_dict = self.flatten_dict_list(song_list)
         
         song_center = self.get_mean_vector(song_list)
@@ -318,12 +330,25 @@ class RecommendSongYear:
                 "spotify_link": spotify_link,
                 "image_link": image_link
             })
+        audit_logger.debug(f"Recommended songs: {spotify_info}")
         return spotify_info
         
 
 
 
     def get_recommended_song_info(self, song_name, artists, release_year):
+
+        """
+        Retrieve additional information for a recommended song from the Spotify API.
+
+        Parameters:
+            song_name (str): The name of the recommended song.
+            artists (list): List of artists for the recommended song.
+            release_year (str): The release year of the recommended song.
+
+        Returns:
+            Additional information for the recommended song (image link, Spotify link, artist name, year).
+        """
         # Authenticate with Spotify API
         client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
         sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
@@ -352,6 +377,18 @@ class RecommendSongYear:
     
     
     def get_spotify_info(self, song_name, year='', artist=''):
+
+        """
+        Retrieve Spotify information (year and artist) for a given song name.
+
+        Parameters:
+            song_name (str): The name of the song.
+            year (int): The release year of the song (optional).
+            artist (str): The artist of the song (optional).
+
+        Returns:
+            Spotify information (year and artist) for the given song name.
+        """
         # Authenticate with Spotify API
         client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
         sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
@@ -383,5 +420,5 @@ class RecommendSongYear:
    
 
 
-# class RecommendSong:
+
 

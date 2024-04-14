@@ -1,13 +1,13 @@
 from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render
 import json
-from .logger import audit_logger, exception_logger
+from .logger import audit_logger
 from django.views.decorators.csrf import csrf_exempt
 from .models import RecommendationScheme, Music
 from .forms import RecommendationForm
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .utils import RecommendPlaylist, RecommendArtist, RecommendSongYear
+from .utils import RecommendPlaylist, RecommendSongYear
 import pandas as pd
 from django.conf import settings
 from decouple import config
@@ -57,32 +57,6 @@ def trending_songs(request):
 
 
 
-
-
-
-
-@csrf_exempt
-@api_view(['POST'])
-def recommend_artist(request):
-    if request.method == 'POST':
-        # Parse JSON data from the request body
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
-
-        # Extract artist_name, genres, and attrs from the parsed JSON data
-        artist_name = data.get('artist_name')
-        genres = data.get('genres')
-
-        #Call generate function in RecommendArtist class
-        recommendations = RecommendArtist().generate(artist_name, genres)
-
-        # Serialize recommendations and return as JSON response
-        # serialized_recommendations = [{'name': r.name, 'link': r.link, 'artist': r.artist, 'image_link': r.image_link} for r in recommendations]
-        return JsonResponse({'recommendations': recommendations})
-    else:
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 
@@ -151,32 +125,6 @@ def recommend_song(request):
 
     
 
-@csrf_exempt
-@api_view(['POST'])
-def search_from_dataset(request):
-    df = pd.read_csv(settings.SONGS_PATH)
-    df['name'] = df['name'].str.lower()
-
-    df.set_index('name', inplace=True)  
-    # sorted_df = df.sort_values(by='popularity', ascending=False)
-
-    song_name = request.POST.get('songs').lower()
-    regex_pattern = f".*{re.escape(song_name)}.*"
-    
-    result = df[df.index.str.contains(regex_pattern, case=False, regex=True)]
-
-    # result = df.loc[(df.index == song_name)]
-    result = result.reset_index().to_dict(orient="records")
-
-    result = [r['name'].title() for r in result if r['name'].startswith(song_name) ]
-
-    # for r in result:
-    #     r['name'] = r['name'].title()    
-
-    return Response({'songs': set(result)})
-
-
-
 
 
 @csrf_exempt
@@ -199,50 +147,4 @@ def search_from_spotify(request):
             'image_link': track['album']['images'][0]['url']
         })
 
-    return Response({'songs': response_data})
-
-# import os
-# import pickle
-# from django.shortcuts import render
-# from django.http import HttpResponse
-
-# def load_model_and_data():
-#     try: 
-#         print(f"YEH::::::::::::::::::::::::::::::::::::::::::::::::::")  
-#         # Load the pickled model and data
-#         with open('datasets/df.pkl', 'rb') as file:
-#             df = pd.read_pickle(file)
-#         with open('datasets/similarity.pkl', 'rb') as file:
-#             similarity = pd.read_pickle(file)
-#         print(f"YEH: {similarity}, {df}")
-#         return df, similarity
-#     except Exception as e:
-#         print(f"ERRR: {str(e)}")
-
-# def recommendation(song_df, df, similarity):
-#     # Your recommendation function
-#     # This function should return a list of recommended songs
-#     # based on the input song
-#     idx = df[df['song'] == song_df].index[0]
-#     distances = sorted(list(enumerate(similarity[idx])), reverse=True, key=lambda x: x[1])
-#     recommended_songs = [df.iloc[m_id[0]]['song'] for m_id in distances[1:21]]
-#     return recommended_songs
-
-# def recommend_lyrics(request):
-#     # Load model and data
-#     df, similarity = load_model_and_data()
-    
-#     if request.method == 'POST':
-#         song = request.POST.get('song')
-#         if song:
-#             # Get recommendations for the selected song
-#             recommendations = recommendation(song, df, similarity)
-#             return render({'recommendations': recommendations})
-
-
-
-
-
-
-
-
+    return Response({'songs': response_data
