@@ -38,7 +38,7 @@ def recommend_playlist(request):
         df = RecommendPlaylist().extract(URL)
         
         # Retrieve recommendations
-        recommends = RecommendPlaylist().recommend_using_playlist(song_df, complete_feature_set, df)
+        recommends = RecommendPlaylist().recommend_using_playlist(song_df, complete_feature_set, df, n_songs)
 
 
         my_songs = []

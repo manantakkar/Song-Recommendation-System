@@ -23,28 +23,34 @@ client_secret = config('client_secret')
 
 
 class RecommendPlaylist:
+    
     """
     A class for recommending songs based on a specific playlist.
     """
 
    
-    def generate_playlist_feature(complete_feature_set, playlist_df):
+    def generate_playlist_feature(self, song_features, playlist_df):
+        
         """
         Summarize a user's playlist into a single vector.
 
         Parameters:
-            complete_feature_set (DataFrame): DataFrame with all features for the Spotify songs.
+            song_features (DataFrame): DataFrame with all features for the Spotify songs.
             playlist_df (DataFrame): Playlist DataFrame.
 
         Returns:
             tuple: Tuple containing summarized playlist features and feature set of non-playlist songs.
         """
-        complete_feature_set_playlist = complete_feature_set[complete_feature_set['id'].isin(playlist_df['id'].values)]
-        complete_feature_set_nonplaylist = complete_feature_set[~complete_feature_set['id'].isin(playlist_df['id'].values)]
-        complete_feature_set_playlist_final = complete_feature_set_playlist.drop(columns="id")
-        return complete_feature_set_playlist_final.sum(axis=0), complete_feature_set_nonplaylist
+        
+        features_playlist = song_features[song_features['id'].isin(playlist_df['id'].values)]
+        feature_nonplaylist = song_features[~song_features['id'].isin(playlist_df['id'].values)]
+        feature_playlist_final = features_playlist.drop(columns="id")
+        return feature_playlist_final.sum(axis=0), feature_nonplaylist
 
-    def playlist_recommendations(df, features, nonplaylist_features):
+    
+    
+    def playlist_recommendations(self, df, features, nonplaylist_features, n_songs):
+        
         """
         Generate recommendations based on songs in a specific playlist.
 
@@ -52,37 +58,51 @@ class RecommendPlaylist:
             df (DataFrame): Spotify DataFrame.
             features (Series): Summarized playlist feature (single vector).
             nonplaylist_features (DataFrame): Feature set of songs that are not in the selected playlist.
-
+            n_songs (int): Number of recommendations
         Returns:
-            DataFrame: Top 40 recommendations for that playlist.
+            DataFrame: Top recommendations for that playlist.
         """
-        np_df = df[df['id'].isin(nonplaylist_features['id'].values)]
-        np_df['sim'] = cosine_similarity(nonplaylist_features.drop('id', axis=1).values, features.values.reshape(1, -1))[:, 0]
-        np_df_top = np_df.sort_values('sim', ascending=False).head(40) 
-        return np_df_top
+        
+        final_df = df[df['id'].isin(nonplaylist_features['id'].values)]
+        final_df['sim'] = cosine_similarity(nonplaylist_features.drop('id', axis=1).values, features.values.reshape(1, -1))[:, 0]
+        df_top = final_df.sort_values('sim', ascending=False).head(n_songs) 
+        return df_top
 
    
-    def recommend_using_playlist(self, song_df, complete_feature_set, playlistDF_test):
+    
+    
+    def recommend_using_playlist(self, song_df, song_features, playlist_df, n_songs):
+        
         """
         Recommend songs from a playlist.
 
         Parameters:
-            songDF (DataFrame): Spotify DataFrame.
-            complete_feature_set (DataFrame): DataFrame with all features for the Spotify songs.
-            playlistDF_test (DataFrame): Playlist DataFrame.
+            song_df (DataFrame): Spotify DataFrame.
+            song_features (DataFrame): DataFrame with all features for the Spotify songs.
+            playlist_df (DataFrame): Playlist DataFrame.
 
         Returns:
             DataFrame: Top 40 recommendations for the playlist.
         """
-        complete_feature_set_playlist_vector, complete_feature_set_nonplaylist = RecommendPlaylist.generate_playlist_feature(complete_feature_set, playlistDF_test)
-        return RecommendPlaylist.playlist_recommendations(song_df, complete_feature_set_playlist_vector, complete_feature_set_nonplaylist)
+        
+        feature_playlist_vector, feature_nonplaylist = self.generate_playlist_feature(song_features, playlist_df)
+        return self.playlist_recommendations(song_df, feature_playlist_vector, feature_nonplaylist, n_songs)
 
 
 
 
     def extract(self, URL):
-        
 
+        """
+        Extract playlist information from a Spotify playlist URL.
+
+        Parameters:
+            URL (str): Spotify playlist URL.
+
+        Returns:
+            DataFrame: DataFrame containing extracted features of songs in the playlist.
+        """
+        
         #use the clint secret and id details
         client_credentials_manager = SpotifyClientCredentials(client_id=client_id,client_secret=client_secret)
         sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
@@ -268,9 +288,10 @@ class RecommendSongYear:
             audit_logger.debug(f"User Input----> song: {songs}, artist: {artist}, year: {year}, n_songs: {n_songs}")
             song_list = []
             for song in songs:
+
                         
                 if not artist or not year:
-                    year, artist = self.get_spotify_info(song.title(), year = year, artist = artist)
+                    year, artist = self.get_spotify_info(song.title(), year = year, artist = artist) #get song data if not provided
                 
                 song_list.append({'name': song.title(), 'artist': artist, 'year': int(year)})
                 year = ''
@@ -329,11 +350,7 @@ class RecommendSongYear:
         client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
         sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
         
-        # Search for the song
-        # if release_year == '':
-        #     query = f'track:{song_name} artist:{artists[0]}'
 
-        # else:
         query = f'track:{song_name} artist:{artists[0]} year:{release_year}'
            
         results = sp.search(q=query, type='track', limit=1)

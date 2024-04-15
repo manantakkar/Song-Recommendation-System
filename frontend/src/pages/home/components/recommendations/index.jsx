@@ -46,7 +46,11 @@ export default function Recommendations({ songs }) {
                 <h5 className="text-lg font-medium leading-none">
                   {song.name}
                 </h5>
-                <p className="text-sm">{song.artist.join(", ")}</p>
+                <p className="text-sm">
+                  {Array.isArray(song.artist)
+                    ? song.artist.join(", ")
+                    : song.artist}
+                </p>
               </div>
             </a>
           );
