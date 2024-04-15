@@ -304,7 +304,7 @@ class RecommendSongYear:
                     "spotify_link": spotify_link,
                     "image_link": image_link
                 })
-            audit_logger.debug(f"Recommended songs: {spotify_info}")
+            audit_logger.info(f"Recommended songs: {spotify_info}")
             return spotify_info
         
         except Exception as e:

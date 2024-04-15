@@ -3,7 +3,7 @@ import defaultImage from "../../../../assets/image.png";
 /**
  * @typedef Song
  * @property {string} name
- * @property {string} artist
+ * @property {string[]} artist
  * @property {string} year
  * @property {string} image_link
  * @property {string} spotify_link
@@ -46,7 +46,7 @@ export default function Recommendations({ songs }) {
                 <h5 className="text-lg font-medium leading-none">
                   {song.name}
                 </h5>
-                <p className="text-sm">{song.artist}</p>
+                <p className="text-sm">{song.artist.join(", ")}</p>
               </div>
             </a>
           );

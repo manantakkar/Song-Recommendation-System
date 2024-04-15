@@ -19,47 +19,6 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 
 
-    
-@csrf_exempt
-@api_view(['GET'])
-def trending_songs(request):
-    
-    # Last.fm API endpoint for getting top tracks
-    API_KEY = config('last_fm_key')
-    endpoint = f'http://ws.audioscrobbler.com/2.0/?method=chart.gettoptracks&api_key={API_KEY}&format=json'
-
-    # Make a GET request to the Last.fm API
-    response = requests.get(endpoint)
-
-    
-    # Check if the request was successful
-    if response.status_code == 200:
-        
-        # Parse the JSON response
-        data = response.json()
-        
-        # Extract the trending tracks
-        trending_tracks = data['tracks']['track']
-
-        # Extract required fields from each track
-        trending_songs = []
-        for track in trending_tracks:
-            song_name = track['name']
-            artist_name = track['artist']['name']
-            song_url = track['url']
-            trending_songs.append({'song_name': song_name, 'artist': artist_name, 'url': song_url})
-
-        return JsonResponse({'trending_songs': trending_songs})
-    
-    else:
-        # If the request was not successful, return an error response
-        return JsonResponse({'error': 'Failed to fetch trending tracks'}, status=response.status_code)
-
-
-
-
-
-
 
 @csrf_exempt
 @api_view(['POST'])
@@ -86,6 +45,7 @@ def recommend_playlist(request):
         for i in range(n_songs):
             my_songs.append({'name': str(recommends.iloc[i,4]), 'artist': str(recommends.iloc[i,1]), 'spotify_link': "https://open.spotify.com/track/"+ str(recommends.iloc[i,-6]).split("/")[-1]})
         
+        audit_logger.info(f"Recommended Songs: {my_songs}")
         # Return recommendations as JSON response    
         return Response(my_songs)
 
