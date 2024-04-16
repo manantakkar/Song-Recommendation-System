@@ -179,4 +179,4 @@ To use the application, follow the instructions below:
     ```
 
 ## License
-This project is licensed under the [MIT License](LICENSE). See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE). See the [LICENSE](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/LICENSE.txt) file for details.
