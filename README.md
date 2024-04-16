@@ -47,18 +47,30 @@ MeloMap is a web application that recommends songs to users based on their input
 To use the application, follow the instructions below:
 
 1. **Recommendation by Song**:
+
    - Search the song
-   - ![Screenshot 1](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2011-54-51.png)
+
+     ![Screenshot 1](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2011-54-51.png)
+
    - Select the song, enter the number of recommendations(optional), then click on Get Recommendations
-   - ![Screenshot 2](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-13-04.png)
+
+     ![Screenshot 2](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-13-04.png)
+
    - Click on the recommended song to listen it on spotify
-   - ![Screenshot 3](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-13-48.png)
+
+     ![Screenshot 3](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-13-48.png)
+
 2. **Recommendation by Url**:
+
    - Enter spotify playlist url, enter the number of recommendations(optional), then click on Get Recommendations
-   - ![Screenshot 4](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-17-47.png)
-   - Click on the recommended song to listen it on spotify 
-   - ![Screenshot 5](screenshots/screenshot1.png "Screenshot 1 Description")
+     
+     ![Screenshot 4](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-17-47.png)
+
+   - Click on the recommended song to listen it on spotify
+      
+     ![Screenshot 5](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-52-02.png)
    
+
 ## Technologies Used
 - Django: Backend framework for handling requests and data processing.
 - React: Frontend library for building user interfaces.
@@ -66,6 +78,7 @@ To use the application, follow the instructions below:
 - Python: Programming language used for backend development and for creating recommendation model.
 - JavaScript: Programming language used for frontend development.
 - Docker: Containerization platform for packaging the application and its dependencies.
+
 
 ## API Documentation
 
@@ -164,5 +177,6 @@ To use the application, follow the instructions below:
         ]
     }
     ```
+
 ## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the [MIT License](LICENSE). See the [LICENSE](LICENSE) file for details.
