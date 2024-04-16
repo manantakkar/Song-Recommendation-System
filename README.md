@@ -100,7 +100,7 @@ To use the application, follow the instructions below:
 
 ## Documentation
 
-For detailed documentation, including class descriptions and methods, please refer to [Notion Documentation](https://www.notion.so/MananTakkar_Song-Recommendation-System-dfc0b614d4554783893d28592d8c36db?pvs=4).
+For detailed documentation, including class descriptions and methods, please refer to [Notion Documentation](https://occipital-elm-10d.notion.site/MananTakkar_Song-Recommendation-System-dfc0b614d4554783893d28592d8c36db?pvs=4).
 
 
 
