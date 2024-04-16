@@ -48,16 +48,16 @@ To use the application, follow the instructions below:
 
 1. **Recommendation by Song**:
    - Search the song
-   - ![Screenshot 1](screenshots/screenshot1.png "Screenshot 1 Description")
+   - ![Screenshot 1](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2011-54-51.png)
    - Select the song, enter the number of recommendations(optional), then click on Get Recommendations
-   - ![Screenshot 2](screenshots/screenshot2.png "Screenshot 2 Description")
+   - ![Screenshot 2](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-13-04.png)
    - Click on the recommended song to listen it on spotify
-   - ![Screenshot 3](screenshots/screenshot2.png "Screenshot 2 Description")
+   - ![Screenshot 3](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-13-48.png)
 2. **Recommendation by Url**:
    - Enter spotify playlist url, enter the number of recommendations(optional), then click on Get Recommendations
-   - ![Screenshot 1](screenshots/screenshot1.png "Screenshot 1 Description")
+   - ![Screenshot 4](https://github.com/manantakkar18/Song-Recommendation-System/blob/main/screenshots/Screenshot%20from%202024-04-16%2012-17-47.png)
    - Click on the recommended song to listen it on spotify 
-   - ![Screenshot 2](screenshots/screenshot1.png "Screenshot 1 Description")
+   - ![Screenshot 5](screenshots/screenshot1.png "Screenshot 1 Description")
    
 ## Technologies Used
 - Django: Backend framework for handling requests and data processing.
