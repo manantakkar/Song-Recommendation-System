@@ -3,6 +3,7 @@
 Welcome to the Song Recommendation System! This project aims to recommend songs based on user input using data from the Spotify API. By leveraging K-means clustering and cosine similarity, users can receive personalized song recommendations either by providing individual songs or a playlist URL.
 
 
+
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -14,9 +15,11 @@ Welcome to the Song Recommendation System! This project aims to recommend songs 
 - [License](#license)
 
 
+
 ## Introduction
 
 MeloMap is a web application that recommends songs to users based on their input. It utilizes machine learning models trained on Spotify's song data to generate recommendations.
+
 
 
 ## Features
@@ -24,6 +27,8 @@ MeloMap is a web application that recommends songs to users based on their input
 - Users can input a song name, artist and year or a playlist Url to receive song recommendations.
 - Recommendations are based on the input song's features and similarities to other songs in the dataset.
 - The application provides recommendations in real-time using the data from Spotify API.
+
+
 
 ## Installation
 
@@ -44,6 +49,12 @@ MeloMap is a web application that recommends songs to users based on their input
     ```bash
     docker-compose up --build
     ```
+2. Visit the following url in your browser to access the application:
+
+   ```bash
+   http://localhost:3000/
+    ```
+
 
 
 ## Usage
@@ -76,6 +87,7 @@ To use the application, follow the instructions below:
    
 
 
+
 ## Technologies Used
 - Django: Backend framework for handling requests and data processing.
 - React: Frontend library for building user interfaces.
@@ -85,9 +97,11 @@ To use the application, follow the instructions below:
 - Docker: Containerization platform for packaging the application and its dependencies.
 
 
+
 ## Documentation
 
 For detailed documentation, including class descriptions and methods, please refer to [Notion Documentation](https://www.notion.so/MananTakkar_Song-Recommendation-System-dfc0b614d4554783893d28592d8c36db?pvs=4).
+
 
 
 ## License
