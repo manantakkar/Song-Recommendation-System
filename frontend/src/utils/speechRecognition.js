@@ -5,6 +5,9 @@
  */
 
 export function speechRecognition(onResult, onError) {
+  if (!("webkitSpeechRecognition" in window)) {
+    return { start: () => {}, stop: () => {} };
+  }
   const recognition = new webkitSpeechRecognition();
   recognition.onstart = () => {
     onResult("Listening...");
