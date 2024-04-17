@@ -102,47 +102,55 @@ class RecommendPlaylist:
         Returns:
             DataFrame: DataFrame containing extracted features of songs in the playlist.
         """
+        max_retries = 5
+        attempts = 0
+
+        while attempts < max_retries:
+            try:
+                #use the clint secret and id details
+                client_credentials_manager = SpotifyClientCredentials(client_id=client_id,client_secret=client_secret)
+                sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+
+                # the URI is split by ':' to get the username and playlist ID
+                playlist_id = URL.split("/")[4].split("?")[0]
+                playlist_tracks_data = sp.playlist_tracks(playlist_id)
+
+                #lists that will be filled in with features
+                playlist_tracks_id = []
+                playlist_tracks_titles = []
+                playlist_tracks_artists = []
+                playlist_tracks_first_artists = []
+
+                #go through the dictionary to extract the data
+                for track in playlist_tracks_data['items']:
+                    playlist_tracks_id.append(track['track']['id'])
+                    playlist_tracks_titles.append(track['track']['name'])
+                    # adds a list of all artists involved in the song to the list of artists for the playlist
+                    artist_list = []
+                    for artist in track['track']['artists']:
+                        artist_list.append(artist['name'])
+                    playlist_tracks_artists.append(artist_list)
+                    playlist_tracks_first_artists.append(artist_list[0])
+
+                #create a dataframe
+                features = sp.audio_features(playlist_tracks_id)
+                features_df = pd.DataFrame(data=features, columns=features[0].keys())
+                features_df['title'] = playlist_tracks_titles
+                features_df['first_artist'] = playlist_tracks_first_artists
+                features_df['all_artists'] = playlist_tracks_artists
+                features_df = features_df[['id', 'title', 'first_artist', 'all_artists',
+                                            'danceability', 'energy', 'key', 'loudness',
+                                            'mode', 'acousticness', 'instrumentalness',
+                                            'liveness', 'valence', 'tempo',
+                                            'duration_ms', 'time_signature']]
+                
+                return features_df
+            except Exception as e:
+                attempts += 1
+                audit_logger.error(f"Error in extracting playlist: {str(e)}")
+                continue
         
-        #use the clint secret and id details
-        client_credentials_manager = SpotifyClientCredentials(client_id=client_id,client_secret=client_secret)
-        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
-
-        # the URI is split by ':' to get the username and playlist ID
-        playlist_id = URL.split("/")[4].split("?")[0]
-        playlist_tracks_data = sp.playlist_tracks(playlist_id)
-
-        #lists that will be filled in with features
-        playlist_tracks_id = []
-        playlist_tracks_titles = []
-        playlist_tracks_artists = []
-        playlist_tracks_first_artists = []
-
-        #go through the dictionary to extract the data
-        for track in playlist_tracks_data['items']:
-            playlist_tracks_id.append(track['track']['id'])
-            playlist_tracks_titles.append(track['track']['name'])
-            # adds a list of all artists involved in the song to the list of artists for the playlist
-            artist_list = []
-            for artist in track['track']['artists']:
-                artist_list.append(artist['name'])
-            playlist_tracks_artists.append(artist_list)
-            playlist_tracks_first_artists.append(artist_list[0])
-
-        #create a dataframe
-        features = sp.audio_features(playlist_tracks_id)
-        features_df = pd.DataFrame(data=features, columns=features[0].keys())
-        features_df['title'] = playlist_tracks_titles
-        features_df['first_artist'] = playlist_tracks_first_artists
-        features_df['all_artists'] = playlist_tracks_artists
-        features_df = features_df[['id', 'title', 'first_artist', 'all_artists',
-                                    'danceability', 'energy', 'key', 'loudness',
-                                    'mode', 'acousticness', 'instrumentalness',
-                                    'liveness', 'valence', 'tempo',
-                                    'duration_ms', 'time_signature']]
-        
-        return features_df
-
-
+        return None
 
 
 class RecommendSongYear:
@@ -194,29 +202,39 @@ class RecommendSongYear:
         Returns:
             DataFrame: A DataFrame containing information about the found song.
         """
-    
-        sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
-        song_data = defaultdict()
-        results = sp.search(q= 'track: {} artists: {} year: {}'.format(name,artist,year), limit=1)
-        if results['tracks']['items'] == []:
-            return None
+        
+        max_retries = 5
+        attempts = 0
 
-        results = results['tracks']['items'][0]
-        track_id = results['id']
-        audio_features = sp.audio_features(track_id)[0]
+        while attempts < max_retries:
+            try:
+                sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_id, client_secret=client_secret))
+                song_data = defaultdict()
+                results = sp.search(q= 'track: {} artists: {} year: {}'.format(name,artist,year), limit=1)
+                if results['tracks']['items'] == []:
+                    return None
 
-        song_data['name'] = [name]
-        song_data['year'] = [year]
-        song_data['explicit'] = [int(results['explicit'])]
-        song_data['duration_ms'] = [results['duration_ms']]
-        song_data['popularity'] = [results['popularity']]
+                results = results['tracks']['items'][0]
+                track_id = results['id']
+                audio_features = sp.audio_features(track_id)[0]
 
-        for key, value in audio_features.items():
-            song_data[key] = value
+                song_data['name'] = [name]
+                song_data['year'] = [year]
+                song_data['explicit'] = [int(results['explicit'])]
+                song_data['duration_ms'] = [results['duration_ms']]
+                song_data['popularity'] = [results['popularity']]
 
-        return pd.DataFrame(song_data)
+                for key, value in audio_features.items():
+                    song_data[key] = value
 
+                return pd.DataFrame(song_data)
 
+            except Exception as e:
+                attempts += 1
+                audit_logger.error(f"Error in getting spotify info: {str(e)}")
+                continue
+        
+        return None
     
     
     def get_mean_vector(self, song_list):
@@ -346,27 +364,36 @@ class RecommendSongYear:
         Returns:
             Additional information for the recommended song (image link, Spotify link, artist name, year).
         """
-        # Authenticate with Spotify API
-        client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
-        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+        max_retries = 5
+        attempts = 0
+
+        while attempts < max_retries:
+            try:
+                # Authenticate with Spotify API
+                client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+                sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+                
+
+                query = f'track:{song_name} artist:{artists[0]} year:{release_year}'
+                
+                results = sp.search(q=query, type='track', limit=1)
+
+                # Extract the release year, artist name, image link, and Spotify link from the first search result
+                if results['tracks']['items']:
+                    track = results['tracks']['items'][0]
+                    year = track['album']['release_date'][:4]  # Extract the year part
+                    artist_name = track['artists'][0]['name']  # Extract the artist name
+                    image_link = track['album']['images'][0]['url'] if track['album']['images'] else None  # Extract the image link
+                    spotify_link = track['external_urls']['spotify']  # Extract the Spotify link
+                    return image_link, spotify_link, artist_name, year
+                else:
+                    return None, None, None, None
+            except Exception as e:
+                attempts += 1
+                audit_logger.error(f"Error in getting image and spotify link: {str(e)}")
+                continue
         
-
-        query = f'track:{song_name} artist:{artists[0]} year:{release_year}'
-           
-        results = sp.search(q=query, type='track', limit=1)
-
-        # Extract the release year, artist name, image link, and Spotify link from the first search result
-        if results['tracks']['items']:
-            track = results['tracks']['items'][0]
-            year = track['album']['release_date'][:4]  # Extract the year part
-            artist_name = track['artists'][0]['name']  # Extract the artist name
-            image_link = track['album']['images'][0]['url'] if track['album']['images'] else None  # Extract the image link
-            spotify_link = track['external_urls']['spotify']  # Extract the Spotify link
-            return image_link, spotify_link, artist_name, year
-        else:
-            return None, None, None, None
-
-    
+        return None, None, None, None  
     
     
     def get_spotify_info(self, song_name, year='', artist=''):
@@ -382,32 +409,45 @@ class RecommendSongYear:
         Returns:
             Spotify information (year and artist) for the given song name.
         """
-        # Authenticate with Spotify API
-        client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
-        sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
-
-        # Search for the song
         
-        if artist and year:
-            query = f'track:{song_name} artist:{artist} year:{year}'
-        elif artist:
-            query = f'track:{song_name} artist:{artist}'
-        elif year:
-            query = f'track:{song_name} year:{year}'
-        else:
-            query = f'track:{song_name}'
+        max_retries = 5
+        attempts = 0
 
+        while attempts < max_retries:
+            try:
+                # Authenticate with Spotify API
+                client_credentials_manager = SpotifyClientCredentials(client_id=client_id, client_secret=client_secret)
+                sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+
+                # Search for the song
+                
+                if artist and year:
+                    query = f'track:{song_name} artist:{artist} year:{year}'
+                elif artist:
+                    query = f'track:{song_name} artist:{artist}'
+                elif year:
+                    query = f'track:{song_name} year:{year}'
+                else:
+                    query = f'track:{song_name}'
+
+                
+                results = sp.search(q=query, type='track', limit=1)
+
+                # Extract the release year, artist name from the first search result
+                if results['tracks']['items']:
+                    track = results['tracks']['items'][0]
+                    release_year = track['album']['release_date'][:4]  # Extract the year part
+                    artist_name = track['artists'][0]['name']  # Extract the artist name
+                    return release_year, artist_name
+                else:
+                    return None, None
+
+            except Exception as e:
+                attempts += 1
+                audit_logger.error(f"Error in getting spotify info: {str(e)}")
+                continue
         
-        results = sp.search(q=query, type='track', limit=1)
-
-        # Extract the release year, artist name from the first search result
-        if results['tracks']['items']:
-            track = results['tracks']['items'][0]
-            release_year = track['album']['release_date'][:4]  # Extract the year part
-            artist_name = track['artists'][0]['name']  # Extract the artist name
-            return release_year, artist_name
-        else:
-            return None, None
+        return None, None 
 
 
    

@@ -68,10 +68,10 @@ def recommend_song(request):
           
         recommendation = RecommendSongYear().recommend_songs(songs, artist, year, n_songs)
     
-        if len(recommendation) > 0:
-            return Response({'songs': recommendation})
-        elif recommendation == None:
+        if recommendation == None:
             return JsonResponse({'error': 'Enter artist name and release year'}, status=500)
+        elif len(recommendation) > 0:
+            return Response({'songs': recommendation})
         else:
             return HttpResponseServerError
 
